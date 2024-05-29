@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego del Ahorcado</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+
+    #container {
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    #word {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #guesses, #question {
+      margin-bottom: 20px;
+    }
+
+    #input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #hangman {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .part {
+      display: none;
+      stroke: #333;
+      stroke-width: 2;
+    }
+
+    #gallows {
+      stroke: #333;
+      stroke-width: 4;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Juego de Ahorcado</h1>
+    <div id="hangman">
+      <svg height="250" width="200">
+        <line id="gallows" x1="10" y1="240" x2="190" y2="240"></line>
+        <line id="gallows" x1="100" y1="240" x2="100" y2="20"></line>
+        <line id="gallows" x1="100" y1="20" x2="160" y2="20"></line>
+        <line id="gallows" x1="160" y1="20" x2="160" y2="50"></line>
+        <circle id="head" class="part" cx="160" cy="70" r="20"></circle>
+        <line id="body" class="part" x1="160" y1="90" x2="160" y2="150"></line>
+        <line id="leftArm" class="part" x1="160" y1="110" x2="140" y2="130"></line>
+        <line id="rightArm" class="part" x1="160" y1="110" x2="180" y2="130"></line>
+        <line id="leftLeg" class="part" x1="160" y1="150" x2="140" y2="190"></line>
+        <line id="rightLeg" class="part" x1="160" y1="150" x2="180" y2="190"></line>
+      </svg>
+    </div>
+    <div id="word"></div>
+    <p id="guesses">Intentos restantes: <span id="remainingGuesses">5</span></p>
+    <p id="question">Pregunta</p>
+    <input type="text" id="input" maxlength="1">
+    <button onclick="checkLetter()">Responder</button>
+  </div>
+
+  <script>
+    var questions = [
+      { question: "¿Cuál es la capital de México?", answer: "ciudaddemexico" },
+      { question: "¿Cuál es el plato nacional de México?", answer: "tacos" },
+      { question: "¿Qué colores tiene la bandera de México?", answer: "verdeblancorojo" },
+      { question: "¿Qué se celebra el 16 de septiembre en México?", answer: "independencia" },
+      { question: "¿Cómo se llama la fiesta tradicional en México que se celebra el 1 y 2 de noviembre?", answer: "diademuertos" },
+      { question: "¿Cuál es el nombre del famoso pintor mexicano, esposo de Frida Kahlo?", answer: "diegorivera" },
+      { question: "¿Qué bebida mexicana se hace del agave?", answer: "tequila" },
+      { question: "¿Cómo se llama la música tradicional mexicana que se toca con guitarras y trompetas?", answer: "mariachi" },
+      { question: "¿Qué comida mexicana se envuelve en una tortilla y se come con las manos?", answer: "burrito" },
+      { question: "¿Cuál es el nombre del volcán más alto de México?", answer: "picodeorizaba" }
+    ];
+
+
+    var currentQuestionIndex;
+    var remainingGuesses;
+    var currentQuestion;
+    var guessedLetters;
+
+    function startGame() {
+      currentQuestionIndex = Math.floor(Math.random() * questions.length);
+      currentQuestion = questions[currentQuestionIndex];
+      guessedLetters = [];
+      remainingGuesses = 8
+      ;
+      resetHangman();
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      var wordDisplay = '';
+      for (var i = 0; i < currentQuestion.answer.length; i++) {
+        if (guessedLetters.includes(currentQuestion.answer[i])) {
+          wordDisplay += currentQuestion.answer[i];
+        } else {
+          wordDisplay += '_';
+        }
+      }
+      document.getElementById('word').textContent = wordDisplay;
+      document.getElementById('remainingGuesses').textContent = remainingGuesses;
+      document.getElementById('question').textContent = currentQuestion.question;
+    }
+
+    function checkLetter() {
+      var input = document.getElementById('input').value.toLowerCase();
+      if (input.length !== 1 || !input.match(/[a-z]/i)) {
+        alert('Por favor, introduce una letra válida.');
+        return;
+      }
+      if (guessedLetters.includes(input)) {
+        alert('Ya has intentado con esa letra.');
+        return;
+      }
+      guessedLetters.push(input);
+      if (!currentQuestion.answer.includes(input)) {
+        remainingGuesses--;
+        drawHangman();
+        if (remainingGuesses === 0) {
+          alert('¡Te has quedado sin intentos! La respuesta era: ' + currentQuestion.answer);
+          startGame();
+          return;
+        }
+      }
+      if (currentQuestion.answer.split('').every(letter => guessedLetters.includes(letter))) {
+        alert('¡Felicidades! Has adivinado la respuesta: ' + currentQuestion.answer);
+        startGame();
+        return;
+      }
+      updateDisplay();
+      document.getElementById('input').value = '';
+    }
+
+    function drawHangman() {
+      var parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+      var partToDraw = parts[5 - remainingGuesses];
+      document.getElementById(partToDraw).style.display = 'block';
+    }
+
+    function resetHangman() {
+      var parts = document.querySelectorAll('.part');
+      parts.forEach(part => {
+        part.style.display = 'none';
+      });
+    }
+
+    window.onload = startGame;
+  </script>
+</body>
+</html>
